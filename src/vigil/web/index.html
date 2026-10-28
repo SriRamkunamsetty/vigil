@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vigil — stops scams before the money moves</title>
+<meta name="description" content="Vigil listens for scam pressure during a call, checks the payment, and adds just enough friction before money leaves. Demo with synthetic data.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F6E7A'/%3E%3Cpath d='M6 17h5l3-8 4 15 3-7h5' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8"/><path d="M6 17h5l3-8 4 15 3-7h5"/></svg>
+    <div>
+      <h1>Vigil</h1>
+      <p>Stops scams before the money moves</p>
+    </div>
+  </div>
+  <p class="status" id="status" role="status" aria-live="polite">Connecting…</p>
+</header>
+
+<div class="tabs" role="tablist" aria-label="Vigil demos">
+  <button role="tab" id="t-guardian" aria-controls="tab-guardian" aria-selected="true">Protect a call</button>
+  <button role="tab" id="t-network" aria-controls="tab-network" aria-selected="false" tabindex="-1">Trace mule rings</button>
+  <button role="tab" id="t-payments" aria-controls="tab-payments" aria-selected="false" tabindex="-1">Check AI purchases</button>
+  <button role="tab" id="t-eval" aria-controls="tab-eval" aria-selected="false" tabindex="-1">Test results</button>
+</div>
+
+<main id="main">
+
+<!-- ============ Protect a call ============ -->
+<section id="tab-guardian" role="tabpanel" aria-labelledby="t-guardian">
+  <div class="intro">
+    <h2>Warn people while the scammer is still talking</h2>
+    <p>Pick a call and press play. Vigil scores every sentence, then checks the payment the moment money is about to move. The decision comes from a fixed, explainable model. Gemini only helps explain it.</p>
+  </div>
+
+  <div class="stage">
+    <aside class="side">
+      <fieldset class="calls">
+        <legend>Choose a call</legend>
+        <div id="callList"></div>
+      </fieldset>
+      <div class="opts">
+        <label for="lang">Warn me in</label>
+        <select id="lang">
+          <option value="en">English</option>
+          <option value="hi">हिन्दी</option>
+          <option value="te">తెలుగు</option>
+        </select>
+        <label class="check"><input type="checkbox" id="senior"> Extra protection (age 60+)</label>
+      </div>
+      <button class="play" id="play" type="button">Play call</button>
+    </aside>
+
+    <div class="main-col">
+      <div class="transcript-wrap">
+        <ol id="transcript" class="transcript" aria-label="Call transcript"></ol>
+        <div id="payBar" class="paybar" hidden>
+          <span id="payText"></span>
+          <button type="button" id="payBtn">Pay now</button>
+        </div>
+      </div>
+
+      <figure class="thread-fig">
+        <svg id="thread" viewBox="0 0 640 230" role="img" aria-label="Chart of scam risk after each sentence"></svg>
+        <figcaption id="threadCap">Risk after each sentence. Colored bands show where Vigil steps in.</figcaption>
+      </figure>
+
+      <section id="verdict" class="verdict t-allow" aria-live="polite" aria-labelledby="vTier">
+        <div class="v-head">
+          <p class="v-tier" id="vTier">Waiting for the call</p>
+          <p class="v-score" id="vScore"></p>
+        </div>
+        <p class="v-line" id="vLine">Press “Play call” to begin.</p>
+        <p class="v-msg" id="vMsg"></p>
+        <ol class="steps" id="vSteps"></ol>
+        <div class="v-actions" id="vActions"></div>
+      </section>
+
+      <section class="why" id="why" hidden>
+        <h3>Why Vigil said this</h3>
+        <ul class="drivers" id="drivers"></ul>
+        <h4>What was said</h4>
+        <ul class="evidence" id="evidence"></ul>
+        <p class="why-note" id="whyNote"></p>
+      </section>
+
+      <section class="ask">
+        <h3>Ask the guardian</h3>
+        <form id="askForm">
+          <label for="askText" class="sr">Describe the call or message</label>
+          <input id="askText" maxlength="500" autocomplete="off" placeholder="Paste what the caller said, e.g. “Your KYC expired, tell me the OTP”">
+          <button type="submit">Check</button>
+        </form>
+        <p class="ask-out" id="askOut" aria-live="polite"></p>
+      </section>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Trace mule rings ============ -->
+<section id="tab-network" role="tabpanel" aria-labelledby="t-network" hidden>
+  <div class="intro">
+    <h2>Find the accounts that pass scam money along</h2>
+    <p>Scammers move stolen money through “mule” accounts within minutes. Vigil looks at how money flows, not who the customer is, and groups linked accounts into rings. This graph is made-up data.</p>
+  </div>
+  <div class="net-grid">
+    <aside class="side">
+      <p class="side-title" id="netSummary">Loading rings…</p>
+      <div id="ringList" class="ring-list"></div>
+    </aside>
+    <div class="main-col">
+      <figure class="graph-fig">
+        <svg id="graph" viewBox="0 0 760 420" role="img" aria-label="Money flow through one mule ring"></svg>
+        <figcaption id="graphCap"></figcaption>
+      </figure>
+      <section class="note" id="caseNote" hidden>
+        <h3>Case note</h3>
+        <p id="caseText"></p>
+        <ul class="acct" id="acctList"></ul>
+        <form id="approveForm" class="approve">
+          <label for="analyst">Analyst name</label>
+          <input id="analyst" required minlength="2" maxlength="40" autocomplete="off" placeholder="Your name">
+          <button type="submit" id="publishBtn">Approve and share with other banks</button>
+        </form>
+        <p class="hint">Banks share scrambled fingerprints of account numbers, never the numbers themselves, and only after a person approves.</p>
+        <p id="publishOut" class="ok" aria-live="polite"></p>
+      </section>
+    </div>
+  </div>
+
+  <section class="effect" aria-labelledby="effH">
+    <h3 id="effH">When one bank learns, every bank is safer</h3>
+    <p>A payee only counts as flagged once two different banks report it. Try it: report the same account from two banks, then see what a third bank’s customer gets.</p>
+    <div class="effect-row">
+      <div class="payee">
+        <label for="payee">Scam payee</label>
+        <input id="payee" readonly>
+        <button type="button" id="effNew" class="ghost">New payee</button>
+      </div>
+      <ol class="eff-steps">
+        <li><button type="button" id="effA">Bank A reports it</button></li>
+        <li><button type="button" id="effB">Bank B reports it</button></li>
+        <li><button type="button" id="effC">Bank C customer pays ₹20,000</button></li>
+      </ol>
+    </div>
+    <div class="eff-out" id="effOut" aria-live="polite"></div>
+  </section>
+</section>
+
+<!-- ============ Check AI purchases ============ -->
+<section id="tab-payments" role="tabpanel" aria-labelledby="t-payments" hidden>
+  <div class="intro">
+    <h2>Let AI shop for you without handing over the wallet</h2>
+    <p>You sign a mandate: what to buy, the budget, which stores. The store signs its cart. Vigil checks both before any money moves, and treats text inside a cart as untrusted.</p>
+  </div>
+  <div class="pay-grid">
+    <aside class="side">
+      <div id="caseList" class="case-list"></div>
+    </aside>
+    <div class="main-col" id="caseView">
+      <p class="empty">Pick a scenario to see what Vigil checks.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Test results ============ -->
+<section id="tab-eval" role="tabpanel" aria-labelledby="t-eval" hidden>
+  <div class="intro">
+    <h2>What the tests show, and what they do not</h2>
+    <p id="evalDisclaimer">Loading…</p>
+  </div>
+  <div id="evalBody"></div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <p>Vigil is a research prototype built by Team SITA, QIS College, Ongole. All data on this page is synthetic. If you are being scammed, call 1930 or report at cybercrime.gov.in.</p>
+</footer>
+
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <form method="dialog">
+    <h3 id="dlgTitle">Send this alert?</h3>
+    <p id="dlgBody"></p>
+    <p class="hint">Demo only: no message is sent.</p>
+    <div class="dlg-actions">
+      <button value="cancel" class="ghost">Cancel</button>
+      <button value="ok" id="dlgOk">Send alert</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

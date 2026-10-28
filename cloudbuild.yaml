@@ -1,0 +1,41 @@
+# Build, scan-ready push, and deploy to Cloud Run.
+# Usage: gcloud builds submit --config cloudbuild.yaml --substitutions=_REGION=asia-south1
+substitutions:
+  _REGION: asia-south1
+  _REPO: vigil
+  _SERVICE: vigil
+  _ENV: demo            # demo = public synthetic-data showcase; prod = API keys required
+  _LLM_ENABLED: "false" # set "true" once Vertex AI access to the chosen models is confirmed
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA", "."]
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA"]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --service-account=vigil-run@$PROJECT_ID.iam.gserviceaccount.com
+      - --set-env-vars=VIGIL_ENV=${_ENV},VIGIL_LLM_ENABLED=${_LLM_ENABLED},VIGIL_TRUSTED_PROXY_HOPS=1,GOOGLE_GENAI_USE_VERTEXAI=true,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=global
+      - --set-secrets=VIGIL_SIGNAL_KEY=vigil-signal-key:latest,VIGIL_API_KEYS=vigil-api-key-digests:latest
+      - --cpu=1
+      - --memory=1Gi
+      - --concurrency=40
+      - --min-instances=0
+      - --max-instances=5
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_SERVICE}:$SHORT_SHA
+
+options:
+  logging: CLOUD_LOGGING_ONLY

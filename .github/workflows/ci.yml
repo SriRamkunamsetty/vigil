@@ -1,0 +1,80 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Lint
+        run: |
+          ruff check src tests scripts
+          ruff format --check src tests scripts
+      - name: Types
+        run: mypy
+      - name: Unit and API tests
+        run: pytest -m "not e2e" --cov --cov-report=term-missing:skip-covered
+      - name: Evaluation (writes results and regenerates docs)
+        run: make eval
+      - name: Docs are up to date
+        run: git diff --exit-code docs/EVALUATION.md || (echo "Run 'make eval' and commit docs/EVALUATION.md" && exit 1)
+      - name: Browser tests
+        run: |
+          python -m playwright install --with-deps chromium
+          pytest -m e2e
+      - name: Dependency audit
+        run: |
+          pip install pip-audit
+          pip-audit --skip-editable
+        continue-on-error: true # advisory; review findings before releases
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: python
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: vigil:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Smoke test the container
+        run: |
+          docker run -d --name vigil -p 8080:8080 -e VIGIL_ENV=demo vigil:ci
+          for i in $(seq 1 30); do curl -fs localhost:8080/readyz && break || sleep 2; done
+          curl -fs localhost:8080/v1/meta
+          docker exec vigil id -u | grep -qx 10001 # runs as non-root
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Validate
+        working-directory: deploy/terraform
+        run: |
+          terraform fmt -check -recursive
+          terraform init -backend=false
+          terraform validate

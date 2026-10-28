@@ -1,0 +1,6 @@
+project_id    = "your-gcp-project"
+region        = "asia-south1"
+env           = "demo"   # "prod" requires api_key_digests
+public_access = true     # demo only: synthetic data, strict rate limits
+llm_enabled   = false    # true after confirming Vertex AI access to the configured models
+# api_key_digests = "<sha256 hex of each API key, comma separated>"
