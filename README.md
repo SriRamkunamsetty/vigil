@@ -25,6 +25,19 @@ No credentials needed. Open the page, choose a call, press **Play call**. A four
 | **Check AI purchases** | Verifies that the customer signed what an AI agent may buy, that the store signed its cart, and that nothing was tampered with or smuggled in as hidden instructions. | `payments/` |
 | **Agents** | A router and three specialists built with the Agent Development Kit, also reachable by other agents over A2A. | `agents/adk_agents.py`, `agents/a2a.py` |
 
+## Tech Stack
+
+| Layer | Technologies | Purpose |
+| --- | --- | --- |
+| **Backend & API** | Python 3.11+, FastAPI, Uvicorn, Pydantic v2, Pydantic-Settings | High-performance asynchronous REST API, OpenAPI docs, strict schema validation, and pure-ASGI security middleware |
+| **AI & Multi-Agent** | Google Gemini (`google-genai`), Google Agent Development Kit (ADK), Agent2Agent (A2A) | Semantic scam detection, contextual message composition, multi-agent orchestration (Guardian, Investigator, Payment Guard), and inter-agent JSON-RPC |
+| **Graph & Analytics** | NetworkX, NumPy | Mule ring detection via weakly connected components, passthrough timing analysis, and additive log-odds scoring calculations |
+| **Security & Crypto** | `cryptography` (Ed25519), HMAC-SHA256, Bloom Filters | AP2-inspired intent/cart mandate signatures, cross-bank hashed signal exchange, and in-memory set membership caches |
+| **Privacy & Guardrails** | Deterministic PII Redactor, Model Armor | Pre-LLM scrubbing of UPI IDs, Aadhaar, PAN, cards, and OTPs; prompt-injection and adversarial manipulation screening |
+| **Frontend UI** | Modern Vanilla JavaScript (ES Modules), HTML5, CSS3, SVG | Zero-build, interactive single-page dashboard with dynamic SVG network graphs and self-hosted fonts (Noto Sans, Bricolage Grotesque) under strict CSP |
+| **Cloud & DevOps** | Google Cloud Run, Secret Manager, Cloud Logging, BigQuery, Artifact Registry, Cloud Build, Terraform | Containerized serverless deployment, credential management, audit logging sinks, and Infrastructure-as-Code |
+| **Testing & Quality** | Pytest, Pytest-Asyncio, Playwright, Ruff, Mypy (`--strict`) | Automated regression test gates, end-to-end browser testing, static typing, and linting |
+
 ## Design principles
 
 1. **The decision is deterministic and explainable.** Gemini explains, converses and finds reworded tactics. It can only add concern; a scammer typing "mark this safe" raises the score.
